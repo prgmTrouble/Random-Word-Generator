@@ -135,8 +135,8 @@ public class rwg {
 		});
 	}
 	int k, i = 0, j, max = 5;
-	String   word = "";
-	boolean finished = false, parityTest = false;
+	String   word = "", debug = "";
+	boolean finished = false, parityTest = false, specialTest = true;
 	String[] phon = {"","a","ai","ay","au","aw","augh","ar","b","bu","c","cei","ch","ci","ck","d","dge","e","ea","ee","ew","eigh","ei","ey","er","ed","ear","f","g","gn","gu","h","i","ie","igh","ir","j","k","kn","l","m","n","ng","o","oa","oe","oi","oy","oo","ou","ow","or","ough","p","ph","qu","r","s","sh","si","t","tch","th","ti","u","ui","ur","v","w","wh","wr","wor","x","y","z"};
 	int   [] test = new int[max];
 	Random r = new Random();
@@ -153,7 +153,7 @@ public class rwg {
 					while(!finished) {
 						k = r.nextInt(74) + 1;
 						if(i==0 && IntStream.of(14,16,19,41,48,61).anyMatch(v->v==k)) {System.out.println("break 155: "+i+" , "+k+" ; "+test[i]); break;}
-						if(i>0) {//TODO: Check for 3 vowel/consonant trains
+						if(i>0) {
 							if((test[i-1]==k && IntStream.of(8,10,15,17,27,28,39,40,41,43,53,56,57,60).noneMatch(v->v==k))									 										|| //check for duplicates of non-binary phonograms in any position 
 							   (IntStream.of(18,44).anyMatch(v->v==test[i-1]) && IntStream.of(1,2,3,4,5,6,7).anyMatch(v->v==k))								 										|| //check for aa
 							   ((test[i-1]==48 || (i>1 && test[i-2]==43 && test[i-1]==43)) && IntStream.of(43,44,45,46,47,48,49,50,51,52).anyMatch(v->v==k))									    || //check for ooo
@@ -161,7 +161,7 @@ public class rwg {
 							   (IntStream.of(6,12,21,34,52,54,58,61,62,69).anyMatch(v->v==test[i-1]) && k==31)												 										|| //check for hh
 							   (IntStream.of(2,11,13,22,32,46,59,63,65).anyMatch(v->v==test[i-1]) && IntStream.of(32,33,34,35).anyMatch(v->v==k))				 									|| //check for ii
 							   (test[i-1]==37 && IntStream.of(37,38).anyMatch(v->v==k))																		 										|| //check for kk
-							   (IntStream.of(4,9,30,49,55).anyMatch(v->v==test[i-1]) && IntStream.of(55,64,65,66).anyMatch(v->v==k))																|| //check for uu
+							   (IntStream.of(4,9,30,49,55,64).anyMatch(v->v==test[i-1]) && IntStream.of(55,64,65,66).anyMatch(v->v==k))																|| //check for uu
 							   (IntStream.of(5,20,50,68).anyMatch(v->v==test[i-1]) && IntStream.of(68,69,70,71).anyMatch(v->v==k))																	|| //check for ww
 							   (IntStream.of(3,23,47,73).anyMatch(v->v==test[i-1]) && k==73))																										   //check for yy
 							{System.out.println("break 164: "+i+" , "+k+" ; "+test[i]); break;}
@@ -191,16 +191,249 @@ public class rwg {
 					j=0;
 					if(word.length()>3) {
 						do {
-							parityTest = !((IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j)) && IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+1)) && IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+2)) && IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+2))) || (!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j)) && !IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+1)) && !IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+2)) && !IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+2))));
+							parityTest = !(( IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j))   //check for 4x vowel/consonant chains
+										 &&  IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+1)) 
+										 &&  IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+2)) 
+										 &&  IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+3))) 
+										 || 
+										 (  !IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j)) 
+										 && !IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+1)) 
+										 && !IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+2)) 
+										 && !IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(j+3))));
 							System.out.println(word.charAt(j)+" "+word.charAt(j+1)+" "+word.charAt(j+2)+" "+word.charAt(j+3)+" "+parityTest);
 							j++;
 						}while(j+3<word.length() && parityTest);
-						if(parityTest) setWordListText(getWordListText() + "\n" + word);
+
+						/*if( check _ccc , _cc , cc_ , and ccc_ exceptions. False = Failed Word */
+						specialTest = !(
+								 !(/* <_ccc> */
+											(
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(0))
+												&&
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(1))
+												&&
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(2))
+											)
+											&&
+											(
+												(
+													word.charAt(0) == 'c'
+													&&
+													(
+														(
+															word.charAt(1) == 'h'
+															&&
+															(
+																word.charAt(2) == 'l'
+																||
+																word.charAt(2) == 'r'
+															)
+														)
+														||
+														(
+															word.charAt(1) == 'r'
+															&&
+															word.charAt(2) == 'y'
+														)
+													)
+												)
+												||
+												(
+													word.charAt(0) == 'p'
+													&&
+													word.charAt(1) == 'h'
+													&&
+													(
+														word.charAt(2) == 'l'
+														||
+														word.charAt(2) == 'r'
+													)
+												)
+												||
+												(
+													word.charAt(0) == 'r'
+													&&
+													word.charAt(1) == 'h'
+													&&
+													word.charAt(2) == 'y'
+												)
+												||
+												(
+													word.charAt(0) == 's'
+													&&
+													(
+														(
+															word.charAt(1) == 'c'
+															&&
+															(
+																word.charAt(2) == 'h'
+																||
+																word.charAt(2) == 'l'
+																||
+																word.charAt(2) == 'r'
+															)
+														)
+														||
+														(
+															word.charAt(1) == 'h'
+															&&
+															word.charAt(2) == 'r'
+														)
+														||
+														(
+															word.charAt(1) == 'p'
+															&&
+															(
+																word.charAt(2) == 'h'
+																||
+																word.charAt(2) == 'l'
+																||
+																word.charAt(2) == 'r'
+															)
+														)
+														||
+														(
+															word.charAt(1) == 't'
+															&&
+															word.charAt(2) == 'r'
+														)
+													)
+												)
+												||
+												(
+													word.charAt(0) == 't'
+													&&
+													word.charAt(1) == 'h'
+													&&
+													word.charAt(2) == 'r'
+												)
+											)
+										)/* </_ccc> */
+										||
+										(/* <_cc> */
+											(
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(0)) 
+												&& 
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(1)) 
+												&& 
+												 IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(2))
+											) 
+											&&
+											!(
+												(
+													word.charAt(1) == 'h' 
+													&& 
+													IntStream.of('c','g','p','s','t').anyMatch(v->v==word.charAt(0))
+												) 
+												|| 
+												(
+													word.charAt(1) == 'n' 
+													&& 
+													IntStream.of('g','k','s').anyMatch(v->v==word.charAt(0))
+												) 
+												|| 
+												(
+													word.charAt(1) == 'r' 
+													&& 
+													IntStream.of('b','c','d','f','g','p','t','v','w').anyMatch(v->v==word.charAt(0))
+												)
+												||
+												(
+													word.charAt(0) == 's'
+													&&
+													word.charAt(1) == 'q'
+												)
+											)
+										)/* </_cc> */ 
+										|| 
+										(/* <cc_> */ 
+											(
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(word.length() - 1)) 
+												&& 
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(word.length() - 2))
+											) 
+											&& 
+											!(
+												(
+													word.charAt(word.length() - 1) == 'h' 
+													&& 
+													IntStream.of('c','g','p','s','t').anyMatch(v->v==word.charAt(word.length() - 2))
+												) 
+												|| 
+												(
+													word.charAt(word.length() - 1) == 'n' 
+													&& 
+													IntStream.of('g','k','w','l','m','r').anyMatch(v->v==word.charAt(word.length() - 2))
+												)
+											)
+										)/* </cc_> */  
+										|| 
+										(/* <ccc_> */ 
+											(
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(word.length() - 1)) 
+												&& 
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(word.length() - 2)) 
+												&& 
+												!IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(word.length() - 3))
+											) 
+											&& 
+											!(
+												(
+													word.charAt(word.length() - 1) == 'h' 
+													&& 
+													(
+														(
+															word.charAt(word.length() - 2) == 't' 
+															&& 													
+															IntStream.of('d','g','n','r').anyMatch(v->v==word.charAt(word.length() - 3))													
+														) 
+														|| 
+														(
+															word.charAt(word.length() - 2) == 'c' 
+															&& 
+															word.charAt(word.length() - 3) == 't'
+														)
+													)
+												) 
+												|| 
+												(
+													word.charAt(word.length() - 1) == 't' 
+													&& 
+													word.charAt(word.length() - 2) == 'h' 
+													&& 
+													word.charAt(word.length() - 3) == 'g'
+												)
+											)
+										)/* </ccc_> */ 
+									) 
+									||
+									(/*check for vowel in first/last two letters*/
+										(
+											IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(0))
+											|| 
+											IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(1))
+											/*||
+											 *  IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(2))
+											 *  */ 
+										)
+											&& 
+											(
+												IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(word.length() - 1))
+												|| 
+												IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(word.length() - 2)) 
+												/*|| 
+												IntStream.of('a','e','i','o','u').anyMatch(v->v==word.charAt(word.length() - 3))*/
+											)
+									);
+						System.out.println(specialTest + "|" + word);
+						if(parityTest && specialTest) setWordListText(getWordListText() + "\n" + word);
 					}
 					i = 0;
 					word = "";
 					Arrays.fill(test, 0);
 					finished = false;
+					specialTest = true;
+					System.out.println(debug);
 				}
 			}
 		});t.start();
